@@ -588,18 +588,38 @@ function logout(){
   updateStrip();
   const params=new URLSearchParams(location.search);
   const code=params.get('code');
+  const error=params.get('error');
   const meId=sessionStorage.getItem('prc_me');
 
+  // Always clean URL immediately
+  if(code||error) history.replaceState({},'',location.pathname);
+
+  if(error){
+    document.getElementById('landing').style.display='flex';
+    return;
+  }
+
   if(code){
+    // Check if we already processed this code
+    const lastCode=sessionStorage.getItem('last_code');
+    if(lastCode===code){
+      // Code already used, just show landing
+      document.getElementById('landing').style.display='flex';
+      return;
+    }
+    sessionStorage.setItem('last_code',code);
     setLoading('Loading your data…');
-    history.replaceState({},'',location.pathname);
     try{
       const {access_token,athlete}=await handleCallback(code);
       await fetchMemberData(access_token,athlete);
       sessionStorage.setItem('prc_me',athlete.id);
       showDashboard();
       showEl('logout-btn'); hideEl('join-btn'); showEl('my-tab');
-    }catch(e){ alert('Error: '+e.message); location.href=location.pathname; }
+    }catch(e){
+      sessionStorage.removeItem('last_code');
+      document.getElementById('landing').style.display='flex';
+      setTimeout(()=>alert('Connection failed: '+e.message+'. Please try again.'),100);
+    }
   } else if(meId&&loadMembers().find(m=>m.id==meId)){
     showDashboard();
     showEl('logout-btn'); hideEl('join-btn'); showEl('my-tab');
