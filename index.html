@@ -394,7 +394,7 @@ async function connectStrava(){
     // Always use the canonical production domain, never preview URLs
     const redirect = 'https://petrarunningclub.vercel.app';
     const scope = 'read,activity:read_all,profile:read_all';
-    window.location.href = `https://www.strava.com/oauth/authorize?client_id=${client_id}&redirect_uri=${encodeURIComponent(redirect)}&response_type=code&approval_prompt=auto&scope=${scope}`;
+    window.location.href = `https://www.strava.com/oauth/authorize?client_id=${client_id}&redirect_uri=${encodeURIComponent(redirect)}&response_type=code&approval_prompt=force&scope=${scope}`;
   } catch(e) {
     alert('Could not reach server. Make sure the app is deployed on Vercel.');
     location.reload();
@@ -618,7 +618,6 @@ function logout(){
     }catch(e){
       sessionStorage.removeItem('last_code');
       document.getElementById('landing').style.display='flex';
-      setTimeout(()=>alert('Connection failed: '+e.message+'. Please try again.'),100);
     }
   } else if(meId&&loadMembers().find(m=>m.id==meId)){
     showDashboard();
