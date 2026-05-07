@@ -7,13 +7,22 @@ module.exports = (req, res) => {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { code } = req.body || {};
+  // Check env vars are present
+  const clientId = process.env.STRAVA_CLIENT_ID;
+  const clientSecret = process.env.STRAVA_CLIENT_SECRET;
+  
+  if (!clientId || !clientSecret) {
+    return res.status(500).json({ error: 'Server config missing. Check Vercel environment variables.' });
+  }
+
+  const body = req.body || {};
+  const code = body.code;
   if (!code) return res.status(400).json({ error: 'Missing code' });
 
   const payload = JSON.stringify({
-    client_id: process.env.STRAVA_CLIENT_ID,
-    client_secret: process.env.STRAVA_CLIENT_SECRET,
-    code,
+    client_id: clientId,
+    client_secret: clientSecret,
+    code: code,
     grant_type: 'authorization_code'
   });
 
@@ -33,7 +42,12 @@ module.exports = (req, res) => {
     response.on('end', () => {
       try {
         const json = JSON.parse(data);
-        if (!json.access_token) return res.status(400).json({ error: json.message || 'Auth failed' });
+        if (!json.access_token) {
+          return res.status(400).json({ 
+            error: json.message || 'Auth failed',
+            details: json.errors || null
+          });
+        }
         res.json({
           access_token: json.access_token,
           athlete: {
@@ -47,7 +61,7 @@ module.exports = (req, res) => {
           }
         });
       } catch (e) {
-        res.status(500).json({ error: 'Parse error: ' + e.message });
+        res.status(500).json({ error: 'Parse error: ' + e.message, raw: data });
       }
     });
   });
