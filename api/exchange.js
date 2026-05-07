@@ -1,0 +1,58 @@
+const https = require('https');
+
+module.exports = (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  const { code } = req.body || {};
+  if (!code) return res.status(400).json({ error: 'Missing code' });
+
+  const payload = JSON.stringify({
+    client_id: process.env.STRAVA_CLIENT_ID,
+    client_secret: process.env.STRAVA_CLIENT_SECRET,
+    code,
+    grant_type: 'authorization_code'
+  });
+
+  const options = {
+    hostname: 'www.strava.com',
+    path: '/oauth/token',
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Content-Length': Buffer.byteLength(payload)
+    }
+  };
+
+  const request = https.request(options, (response) => {
+    let data = '';
+    response.on('data', chunk => data += chunk);
+    response.on('end', () => {
+      try {
+        const json = JSON.parse(data);
+        if (!json.access_token) return res.status(400).json({ error: json.message || 'Auth failed' });
+        res.json({
+          access_token: json.access_token,
+          athlete: {
+            id: json.athlete.id,
+            firstname: json.athlete.firstname,
+            lastname: json.athlete.lastname,
+            profile_medium: json.athlete.profile_medium,
+            city: json.athlete.city,
+            state: json.athlete.state,
+            country: json.athlete.country
+          }
+        });
+      } catch (e) {
+        res.status(500).json({ error: 'Parse error: ' + e.message });
+      }
+    });
+  });
+
+  request.on('error', e => res.status(500).json({ error: e.message }));
+  request.write(payload);
+  request.end();
+};
