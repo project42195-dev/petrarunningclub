@@ -589,41 +589,34 @@ function logout(){
   const params=new URLSearchParams(location.search);
   const code=params.get('code');
   const error=params.get('error');
-  const meId=sessionStorage.getItem('prc_me');
 
-  // Always clean URL immediately
-  if(code||error) history.replaceState({},'',location.pathname);
+  // Clean URL immediately no matter what
+  history.replaceState({},'',location.pathname);
 
-  if(error){
-    document.getElementById('landing').style.display='flex';
+  if(error || !code){
+    // No code = fresh landing page visit
+    const meId=sessionStorage.getItem('prc_me');
+    if(meId && loadMembers().find(m=>m.id==meId)){
+      showDashboard();
+      showEl('logout-btn'); hideEl('join-btn'); showEl('my-tab');
+    } else {
+      document.getElementById('landing').style.display='flex';
+    }
     return;
   }
 
-  if(code){
-    // Check if we already processed this code
-    const lastCode=sessionStorage.getItem('last_code');
-    if(lastCode===code){
-      // Code already used, just show landing
-      document.getElementById('landing').style.display='flex';
-      return;
-    }
-    sessionStorage.setItem('last_code',code);
-    setLoading('Loading your data…');
-    try{
-      const {access_token,athlete}=await handleCallback(code);
-      await fetchMemberData(access_token,athlete);
-      sessionStorage.setItem('prc_me',athlete.id);
-      showDashboard();
-      showEl('logout-btn'); hideEl('join-btn'); showEl('my-tab');
-    }catch(e){
-      sessionStorage.removeItem('last_code');
-      document.getElementById('landing').style.display='flex';
-    }
-  } else if(meId&&loadMembers().find(m=>m.id==meId)){
+  // We have a fresh code from Strava - process it
+  setLoading('Loading your data…');
+  try{
+    const {access_token,athlete}=await handleCallback(code);
+    await fetchMemberData(access_token,athlete);
+    sessionStorage.setItem('prc_me',athlete.id);
     showDashboard();
     showEl('logout-btn'); hideEl('join-btn'); showEl('my-tab');
-  } else {
+  }catch(e){
+    // Failed - go back to landing so user can try again
     document.getElementById('landing').style.display='flex';
+    console.error('Auth error:',e.message);
   }
 })();
 </script>
