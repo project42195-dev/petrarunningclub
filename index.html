@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Petra Running Club</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f0e0c;
+  --surface: #1a1916;
+  --surface2: #242220;
+  --border: #2e2c28;
+  --border2: #3d3a34;
+  --text: #f0ede6;
+  --muted: #7a7670;
+  --muted2: #4a4844;
+  --accent: #e8340a;
+  --accent2: #fc4c02;
+  --gold: #d4a853;
+  --silver: #9ca3af;
+  --bronze: #c17f3a;
+  --green: #22c55e;
+  --blue: #3b82f6;
+  --mono: 'DM Mono', monospace;
+  --sans: 'DM Sans', sans-serif;
+  --display: 'Bebas Neue', sans-serif;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:var(--sans); background:var(--bg); color:var(--text); min-height:100vh; }
+
+/* ── LANDING ── */
+#landing { min-height:100vh; display:none; flex-direction:column; position:relative; overflow:hidden; }
+.hero-bg {
+  position:absolute; inset:0;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(232,52,10,0.15) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 40% at 80% 80%, rgba(252,76,2,0.08) 0%, transparent 50%);
+}
+.hero-grid {
+  position:absolute; inset:0;
+  background-image: linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size:60px 60px; opacity:0.3;
+  mask-image:radial-gradient(ellipse 80% 60% at 50% 0%, black 0%, transparent 70%);
+}
+.hero-content {
+  flex:1; display:flex; flex-direction:column; align-items:center;
+  justify-content:center; padding:40px 24px;
+  position:relative; z-index:2; text-align:center;
+}
+.club-badge {
+  display:inline-flex; align-items:center; gap:8px;
+  background:rgba(232,52,10,0.12); border:1px solid rgba(232,52,10,0.3);
+  border-radius:20px; padding:6px 16px;
+  font-family:var(--mono); font-size:11px; letter-spacing:0.15em;
+  color:var(--accent2); margin-bottom:24px;
+  animation:fadeUp 0.6s ease forwards;
+}
+.club-dot { width:6px; height:6px; border-radius:50%; background:var(--accent); animation:pulse 2s infinite; }
+.hero-title {
+  font-family:var(--display); font-size:clamp(64px,14vw,120px);
+  line-height:0.9; letter-spacing:0.02em; margin-bottom:8px;
+  animation:fadeUp 0.7s 0.1s ease both;
+}
+.hero-title span { color:var(--accent); }
+.hero-sub {
+  font-size:15px; color:var(--muted); margin-bottom:48px;
+  font-weight:300; letter-spacing:0.05em; text-transform:uppercase;
+  animation:fadeUp 0.7s 0.2s ease both;
+}
+.hero-actions { display:flex; flex-direction:column; align-items:center; gap:12px; animation:fadeUp 0.7s 0.3s ease both; }
+.btn-primary {
+  display:flex; align-items:center; gap:10px;
+  background:var(--accent); color:white; border:none;
+  border-radius:10px; padding:14px 28px;
+  font-family:var(--sans); font-size:15px; font-weight:600;
+  cursor:pointer; transition:all 0.2s;
+}
+.btn-primary:hover { background:var(--accent2); transform:translateY(-2px); box-shadow:0 8px 24px rgba(232,52,10,0.3); }
+.btn-ghost {
+  background:none; border:1px solid var(--border2); color:var(--muted);
+  border-radius:10px; padding:12px 24px;
+  font-family:var(--sans); font-size:14px; cursor:pointer; transition:all 0.2s;
+}
+.btn-ghost:hover { border-color:var(--text); color:var(--text); }
+.hero-stats { display:flex; gap:40px; margin-top:56px; animation:fadeUp 0.7s 0.4s ease both; }
+.hero-stat-val { font-family:var(--display); font-size:36px; line-height:1; }
+.hero-stat-label { font-family:var(--mono); font-size:10px; color:var(--muted); letter-spacing:0.1em; margin-top:4px; }
+
+/* ── LOADING ── */
+#loading-screen {
+  display:none; position:fixed; inset:0; background:var(--bg);
+  z-index:500; align-items:center; justify-content:center; flex-direction:column; gap:16px;
+}
+.loader { width:40px; height:40px; border:2px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin 0.8s linear infinite; }
+.loading-text { font-family:var(--mono); font-size:12px; color:var(--muted); }
+
+/* ── DASHBOARD ── */
+#dashboard { display:none; }
+header {
+  background:var(--surface); border-bottom:1px solid var(--border);
+  padding:0 28px; height:54px;
+  display:flex; align-items:center; justify-content:space-between;
+  position:sticky; top:0; z-index:100;
+}
+.header-logo { font-family:var(--display); font-size:22px; letter-spacing:0.05em; }
+.header-logo span { color:var(--accent); }
+.header-right { display:flex; align-items:center; gap:12px; }
+.sync-badge {
+  display:flex; align-items:center; gap:6px;
+  font-family:var(--mono); font-size:10px; color:var(--muted);
+  background:var(--surface2); border:1px solid var(--border);
+  border-radius:20px; padding:4px 10px;
+}
+.sync-dot { width:5px; height:5px; border-radius:50%; background:var(--green); animation:pulse 2s infinite; }
+.btn-sm {
+  font-family:var(--mono); font-size:11px; color:var(--muted);
+  background:none; border:1px solid var(--border);
+  border-radius:6px; padding:5px 12px; cursor:pointer; transition:all 0.15s;
+}
+.btn-sm:hover { border-color:var(--border2); color:var(--text); }
+.btn-join {
+  background:var(--accent); color:white; border:none;
+  border-radius:6px; padding:6px 14px;
+  font-family:var(--sans); font-size:12px; font-weight:600;
+  cursor:pointer; transition:all 0.15s;
+}
+.btn-join:hover { background:var(--accent2); }
+
+.tab-bar {
+  background:var(--surface); border-bottom:1px solid var(--border);
+  padding:0 28px; display:flex; gap:0; overflow-x:auto;
+}
+.tab {
+  padding:13px 18px; font-size:13px; font-weight:500;
+  color:var(--muted); cursor:pointer;
+  border-bottom:2px solid transparent; transition:all 0.15s; white-space:nowrap; flex-shrink:0;
+}
+.tab.active { color:var(--text); border-bottom-color:var(--accent); }
+.tab:hover:not(.active) { color:var(--text); }
+
+main { padding:24px 28px; max-width:1200px; margin:0 auto; }
+.section-label {
+  font-family:var(--mono); font-size:10px; letter-spacing:0.12em;
+  text-transform:uppercase; color:var(--muted); margin-bottom:14px;
+}
+
+/* STRIP */
+.club-strip { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:28px; }
+.strip-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:10px; padding:18px; position:relative; overflow:hidden;
+}
+.strip-val { font-family:var(--display); font-size:36px; line-height:1; margin-bottom:4px; }
+.strip-label { font-family:var(--mono); font-size:10px; color:var(--muted); letter-spacing:0.08em; }
+.strip-bar { position:absolute; bottom:0; left:0; right:0; height:2px; }
+
+/* LEADERBOARD */
+.lb-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; margin-bottom:28px; }
+.lb-header { padding:14px 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+.lb-title { font-size:14px; font-weight:600; }
+.lb-toggle { display:flex; gap:2px; background:var(--surface2); border-radius:6px; padding:2px; }
+.lb-btn {
+  padding:4px 12px; border-radius:4px; font-family:var(--mono); font-size:10px;
+  cursor:pointer; color:var(--muted); transition:all 0.15s; border:none; background:none;
+}
+.lb-btn.active { background:var(--border2); color:var(--text); }
+.lb-row {
+  display:grid; grid-template-columns:44px 40px 1fr repeat(3,90px) 110px;
+  align-items:center; padding:12px 20px; border-bottom:1px solid var(--border);
+  gap:10px; transition:background 0.1s; cursor:pointer;
+}
+.lb-row:last-child { border-bottom:none; }
+.lb-row:hover { background:var(--surface2); }
+.lb-row.me { background:rgba(232,52,10,0.06); border-left:2px solid var(--accent); }
+.lb-rank { font-family:var(--display); font-size:22px; text-align:center; line-height:1; }
+.rank-1{color:var(--gold)} .rank-2{color:var(--silver)} .rank-3{color:var(--bronze)} .rank-other{color:var(--muted);font-size:16px}
+.lb-avatar { width:36px; height:36px; border-radius:50%; object-fit:cover; }
+.lb-avatar-ph {
+  width:36px; height:36px; border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex; align-items:center; justify-content:center;
+  font-size:13px; font-weight:600; color:white; flex-shrink:0;
+}
+.lb-name { font-size:13px; font-weight:500; }
+.lb-sub { font-family:var(--mono); font-size:10px; color:var(--muted); margin-top:2px; }
+.lb-metric { text-align:right; font-family:var(--mono); font-size:13px; font-weight:500; }
+.lb-metric-label { font-size:9px; color:var(--muted); margin-top:1px; }
+.lb-bar-track { height:4px; background:var(--surface2); border-radius:2px; overflow:hidden; }
+.lb-bar-fill { height:100%; border-radius:2px; background:var(--accent); transition:width 0.8s ease; }
+
+/* PROFILES */
+.profiles-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:14px; margin-bottom:28px; }
+.profile-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:12px; overflow:hidden; transition:transform 0.15s,box-shadow 0.15s;
+}
+.profile-card:hover { transform:translateY(-2px); box-shadow:0 8px 32px rgba(0,0,0,0.3); }
+.profile-card.me-card { border-color:rgba(232,52,10,0.4); }
+.pc-top { padding:16px 18px; display:flex; align-items:center; gap:12px; border-bottom:1px solid var(--border); }
+.pc-avatar { width:44px; height:44px; border-radius:50%; object-fit:cover; }
+.pc-avatar-ph {
+  width:44px; height:44px; border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex; align-items:center; justify-content:center;
+  font-size:15px; font-weight:600; color:white; flex-shrink:0;
+}
+.pc-name { font-size:14px; font-weight:600; margin-bottom:2px; }
+.pc-loc { font-family:var(--mono); font-size:10px; color:var(--muted); }
+.pc-me-badge {
+  margin-left:auto; background:rgba(232,52,10,0.15); border:1px solid rgba(232,52,10,0.3);
+  border-radius:20px; padding:2px 8px; font-family:var(--mono); font-size:9px; color:var(--accent2); flex-shrink:0;
+}
+.pc-stats { display:grid; grid-template-columns:1fr 1fr 1fr; }
+.pc-stat { padding:11px 14px; border-right:1px solid var(--border); text-align:center; }
+.pc-stat:last-child { border-right:none; }
+.pc-stat-val { font-family:var(--display); font-size:20px; line-height:1; margin-bottom:3px; }
+.pc-stat-label { font-family:var(--mono); font-size:9px; color:var(--muted); }
+.pc-pbs { padding:12px 14px; border-top:1px solid var(--border); }
+.pc-pbs-title { font-family:var(--mono); font-size:9px; color:var(--muted); letter-spacing:0.1em; margin-bottom:8px; }
+.pb-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; }
+.pb-dist { font-size:11px; color:var(--muted); }
+.pb-time { font-family:var(--mono); font-size:12px; font-weight:500; }
+.pb-time.no-pb { color:var(--muted2); font-size:10px; }
+
+/* MY PROFILE */
+.my-profile-layout { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px; }
+.big-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:22px; }
+.big-card-title { font-size:13px; font-weight:600; margin-bottom:16px; }
+.pb-table { width:100%; border-collapse:collapse; }
+.pb-table th {
+  font-family:var(--mono); font-size:9px; color:var(--muted);
+  letter-spacing:0.1em; text-align:left; padding:0 0 10px;
+  border-bottom:1px solid var(--border);
+}
+.pb-table th:not(:first-child) { text-align:right; }
+.pb-table td { padding:10px 0; border-bottom:1px solid var(--border); font-size:13px; vertical-align:middle; }
+.pb-table td:not(:first-child) { text-align:right; font-family:var(--mono); }
+.pb-table tr:last-child td { border-bottom:none; }
+.pb-gold { color:var(--gold); font-weight:600; }
+.pb-na { color:var(--muted2); font-size:11px; }
+.mileage-bars { display:flex; flex-direction:column; gap:14px; }
+.ml-header { display:flex; justify-content:space-between; margin-bottom:6px; }
+.ml-label { font-size:12px; font-weight:500; }
+.ml-val { font-family:var(--mono); font-size:11px; color:var(--muted); }
+.ml-track { height:5px; background:var(--surface2); border-radius:3px; overflow:hidden; }
+.ml-fill { height:100%; border-radius:3px; transition:width 0.8s ease; }
+
+.empty { padding:40px; text-align:center; }
+.empty-icon { font-size:32px; margin-bottom:12px; }
+.empty-title { font-size:15px; font-weight:600; margin-bottom:6px; }
+.empty-sub { font-size:13px; color:var(--muted); }
+
+@keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.8)} }
+@keyframes spin { to{transform:rotate(360deg)} }
+
+@media(max-width:768px){
+  .club-strip{grid-template-columns:repeat(2,1fr)}
+  .lb-row{grid-template-columns:36px 36px 1fr 80px}
+  .lb-row>*:nth-child(5),.lb-row>*:nth-child(6),.lb-row>*:nth-child(7){display:none}
+  main{padding:16px} header,.tab-bar{padding:0 16px}
+  .my-profile-layout{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- LANDING -->
+<div id="landing">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-content">
+    <div class="club-badge"><div class="club-dot"></div>RUNNING CLUB · TERENGGANU</div>
+    <div class="hero-title">PETRA<br><span>RUNNING</span><br>CLUB</div>
+    <div class="hero-sub">Kuala Terengganu · Malaysia</div>
+    <div class="hero-actions">
+      <button class="btn-primary" onclick="connectStrava()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169"/></svg>
+        Join with Strava
+      </button>
+      <button class="btn-ghost" onclick="showDashboard()">View Club Dashboard →</button>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="hero-stat-val" id="hs-members">—</div><div class="hero-stat-label">Members</div></div>
+      <div class="hero-stat"><div class="hero-stat-val" id="hs-km">—</div><div class="hero-stat-label">KM This Week</div></div>
+      <div class="hero-stat"><div class="hero-stat-val" id="hs-runs">—</div><div class="hero-stat-label">Runs This Month</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div id="loading-screen">
+  <div class="loader"></div>
+  <div class="loading-text" id="loading-text">Connecting to Strava…</div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+  <header>
+    <div class="header-logo">PETRA <span>RC</span></div>
+    <div class="header-right">
+      <div class="sync-badge"><div class="sync-dot"></div><span id="sync-label">Live</span></div>
+      <button class="btn-sm" id="logout-btn" onclick="logout()" style="display:none">Leave</button>
+      <button class="btn-join" id="join-btn" onclick="connectStrava()">+ Join Club</button>
+    </div>
+  </header>
+  <div class="tab-bar">
+    <div class="tab active" onclick="switchTab('leaderboard',this)">🏆 Leaderboard</div>
+    <div class="tab" onclick="switchTab('members',this)">👥 Members</div>
+    <div class="tab" id="my-tab" onclick="switchTab('myprofile',this)" style="display:none">⚡ My Profile</div>
+  </div>
+  <main>
+    <div class="club-strip">
+      <div class="strip-card"><div class="strip-val" id="cs-members">—</div><div class="strip-label">Members</div><div class="strip-bar" style="background:var(--accent)"></div></div>
+      <div class="strip-card"><div class="strip-val" id="cs-week">—</div><div class="strip-label">KM This Week</div><div class="strip-bar" style="background:var(--blue)"></div></div>
+      <div class="strip-card"><div class="strip-val" id="cs-month">—</div><div class="strip-label">KM This Month</div><div class="strip-bar" style="background:var(--gold)"></div></div>
+      <div class="strip-card"><div class="strip-val" id="cs-runs">—</div><div class="strip-label">Runs This Month</div><div class="strip-bar" style="background:var(--green)"></div></div>
+    </div>
+    <div id="tab-leaderboard">
+      <div class="lb-card">
+        <div class="lb-header">
+          <div class="lb-title">Distance Ranking</div>
+          <div class="lb-toggle">
+            <button class="lb-btn active" onclick="setLbPeriod('week',this)">Week</button>
+            <button class="lb-btn" onclick="setLbPeriod('month',this)">Month</button>
+            <button class="lb-btn" onclick="setLbPeriod('year',this)">Year</button>
+          </div>
+        </div>
+        <div id="lb-body"><div class="empty"><div class="empty-icon">🏃</div><div class="empty-title">No members yet</div><div class="empty-sub">Be the first — click "Join Club" above!</div></div></div>
+      </div>
+    </div>
+    <div id="tab-members" style="display:none">
+      <div class="section-label">Club Members</div>
+      <div class="profiles-grid" id="profiles-grid">
+        <div style="grid-column:1/-1" class="empty"><div class="empty-icon">👥</div><div class="empty-title">No members yet</div><div class="empty-sub">Connect your Strava to join!</div></div>
+      </div>
+    </div>
+    <div id="tab-myprofile" style="display:none">
+      <div class="section-label">My Stats</div>
+      <div class="my-profile-layout">
+        <div class="big-card"><div class="big-card-title">🏅 Personal Bests</div><table class="pb-table"><thead><tr><th>Distance</th><th>Time</th><th>Pace</th><th>Date</th></tr></thead><tbody id="pb-tbody"></tbody></table></div>
+        <div class="big-card"><div class="big-card-title">📊 Mileage</div><div class="mileage-bars" id="mileage-bars"></div></div>
+      </div>
+      <div class="section-label">Recent Activities</div>
+      <div class="lb-card" id="my-activities"></div>
+    </div>
+  </main>
+</div>
+
+<script>
+// ── CONFIG ──
+const CLUB_KEY = 'petra_rc_v4';
+let lbPeriod = 'week';
+const PB_DISTS = [
+  {label:'5K', meters:5000, effort:'5k'},
+  {label:'10K', meters:10000, effort:'10k'},
+  {label:'Half Marathon', meters:21097, effort:'Half-Marathon'},
+  {label:'Full Marathon', meters:42195, effort:'Marathon'},
+];
+
+// ── STORAGE (shared via localStorage — upgrade to DB later) ──
+function loadMembers() { try { return JSON.parse(localStorage.getItem(CLUB_KEY)||'[]'); } catch { return []; } }
+function saveMembers(a) { localStorage.setItem(CLUB_KEY, JSON.stringify(a)); }
+function upsertMember(m) {
+  const arr = loadMembers();
+  const i = arr.findIndex(x=>x.id===m.id);
+  if (i>=0) arr[i]={...arr[i],...m}; else arr.push(m);
+  saveMembers(arr);
+}
+function getMe() { return loadMembers().find(m=>m.id===sessionStorage.getItem('prc_me')); }
+
+// ── UI ──
+function showEl(id,type='block'){document.getElementById(id).style.display=type}
+function hideEl(id){document.getElementById(id).style.display='none'}
+function setLoading(msg){hideEl('landing');hideEl('dashboard');const ls=document.getElementById('loading-screen');ls.style.display='flex';document.getElementById('loading-text').textContent=msg;}
+function showDashboard(){hideEl('landing');hideEl('loading-screen');showEl('dashboard');updateStrip();renderLeaderboard();}
+
+function switchTab(name,el){
+  ['leaderboard','members','myprofile'].forEach(t=>document.getElementById('tab-'+t).style.display=t===name?'block':'none');
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  if(name==='leaderboard')renderLeaderboard();
+  if(name==='members')renderProfiles();
+  if(name==='myprofile')renderMyProfile();
+}
+
+// ── STRAVA OAUTH ──
+async function connectStrava(){
+  setLoading('Connecting to Strava…');
+  try {
+    const r = await fetch('/api/config');
+    const {client_id} = await r.json();
+    // Always use the canonical production domain, never preview URLs
+    const redirect = 'https://petrarunningclub.vercel.app';
+    const scope = 'read,activity:read_all,profile:read_all';
+    window.location.href = `https://www.strava.com/oauth/authorize?client_id=${client_id}&redirect_uri=${encodeURIComponent(redirect)}&response_type=code&approval_prompt=auto&scope=${scope}`;
+  } catch(e) {
+    alert('Could not reach server. Make sure the app is deployed on Vercel.');
+    location.reload();
+  }
+}
+
+async function handleCallback(code){
+  setLoading('Authenticating…');
+  const r = await fetch('/api/exchange', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({code})
+  });
+  const data = await r.json();
+  if(data.error) throw new Error(data.error);
+  return data;
+}
+
+// ── HELPERS ──
+function km(m){return +(m/1000).toFixed(1);}
+function toTime(s){if(!s)return'—';const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;return h>0?`${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`:`${m}:${String(sec).padStart(2,'0')}`;}
+function pace(spd){if(!spd)return'—';const s=1000/spd;return`${Math.floor(s/60)}:${String(Math.round(s%60)).padStart(2,'0')}/km`;}
+function initials(n){return(n||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();}
+function fmtDate(iso){return new Date(iso).toLocaleDateString('en-MY',{day:'numeric',month:'short',year:'numeric'});}
+function actEmoji(t){return{Run:'🏃',VirtualRun:'🏃',Ride:'🚴',Swim:'🏊',Hike:'🥾',Walk:'🚶'}[t]||'⚡';}
+
+function extractPBs(activities){
+  const pbs={};
+  PB_DISTS.forEach(d=>{pbs[d.label]=null;});
+  activities.forEach(a=>{
+    // from best_efforts
+    if(a.best_efforts) a.best_efforts.forEach(be=>{
+      PB_DISTS.forEach(d=>{
+        if(be.name===d.effort||be.name===d.label){
+          if(!pbs[d.label]||be.elapsed_time<pbs[d.label].time)
+            pbs[d.label]={time:be.elapsed_time,date:a.start_date_local,pace:pace(d.meters/be.elapsed_time)};
+        }
+      });
+    });
+    // from distance match (races)
+    if(a.type==='Run'&&a.distance>0){
+      PB_DISTS.forEach(d=>{
+        if(Math.abs(a.distance-d.meters)<d.meters*0.02){
+          if(!pbs[d.label]||a.moving_time<pbs[d.label].time)
+            pbs[d.label]={time:a.moving_time,date:a.start_date_local,pace:pace(a.average_speed)};
+        }
+      });
+    }
+  });
+  return pbs;
+}
+
+function calcMileage(activities){
+  const now=new Date();
+  const wk=new Date(now); wk.setDate(now.getDate()-now.getDay()); wk.setHours(0,0,0,0);
+  const mo=new Date(now.getFullYear(),now.getMonth(),1);
+  const yr=new Date(now.getFullYear(),0,1);
+  let week=0,month=0,year=0,weekRuns=0,monthRuns=0;
+  activities.forEach(a=>{
+    const d=new Date(a.start_date_local),k=km(a.distance);
+    if(d>=yr) year+=k;
+    if(d>=mo){month+=k;if(a.type==='Run')monthRuns++;}
+    if(d>=wk){week+=k;if(a.type==='Run')weekRuns++;}
+  });
+  return{week:+week.toFixed(1),month:+month.toFixed(1),year:+year.toFixed(1),weekRuns,monthRuns};
+}
+
+// ── FETCH MEMBER DATA ──
+async function fetchMemberData(token, athlete){
+  setLoading('Loading your activities…');
+  const activities = await fetch('https://www.strava.com/api/v3/athlete/activities?per_page=100',{
+    headers:{Authorization:`Bearer ${token}`}
+  }).then(r=>r.json());
+
+  const member = {
+    id: athlete.id,
+    name: `${athlete.firstname} ${athlete.lastname}`,
+    city: [athlete.city,athlete.state,athlete.country].filter(Boolean).join(', '),
+    avatar: athlete.profile_medium,
+    pbs: extractPBs(activities),
+    mileage: calcMileage(activities),
+    recent: activities.slice(0,5).map(a=>({
+      name:a.name, distance:km(a.distance),
+      time:toTime(a.moving_time), type:a.type,
+      date:a.start_date_local, pace:pace(a.average_speed)
+    })),
+    updatedAt: new Date().toISOString()
+  };
+  upsertMember(member);
+  return member;
+}
+
+// ── RENDER ──
+function updateStrip(){
+  const members=loadMembers();
+  let wk=0,mo=0,runs=0;
+  members.forEach(m=>{wk+=m.mileage?.week||0;mo+=m.mileage?.month||0;runs+=m.mileage?.monthRuns||0;});
+  document.getElementById('cs-members').textContent=members.length;
+  document.getElementById('cs-week').textContent=wk.toFixed(0);
+  document.getElementById('cs-month').textContent=mo.toFixed(0);
+  document.getElementById('cs-runs').textContent=runs;
+  document.getElementById('hs-members').textContent=members.length;
+  document.getElementById('hs-km').textContent=wk.toFixed(0);
+  document.getElementById('hs-runs').textContent=runs;
+}
+
+function renderLeaderboard(){
+  const members=loadMembers();
+  if(!members.length) return;
+  const meId=sessionStorage.getItem('prc_me');
+  const sorted=[...members].sort((a,b)=>(b.mileage?.[lbPeriod]||0)-(a.mileage?.[lbPeriod]||0));
+  const maxKm=sorted[0]?.mileage?.[lbPeriod]||1;
+  document.getElementById('lb-body').innerHTML = sorted.map((m,i)=>{
+    const k=m.mileage?.[lbPeriod]||0;
+    const isMe=String(m.id)===String(meId);
+    const rankCls=i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'rank-other';
+    const av=(m.avatar&&!m.avatar.includes('avatar/large/default'))
+      ?`<img class="lb-avatar" src="${m.avatar}" onerror="this.outerHTML='<div class=\\"lb-avatar-ph\\">${initials(m.name)}</div>'">`
+      :`<div class="lb-avatar-ph">${initials(m.name)}</div>`;
+    const pb5k=m.pbs?.['5K']?toTime(m.pbs['5K'].time):'—';
+    const runs=lbPeriod==='week'?m.mileage?.weekRuns||0:m.mileage?.monthRuns||0;
+    const pct=Math.round(k/maxKm*100);
+    return`<div class="lb-row ${isMe?'me':''}">
+      <div class="lb-rank ${rankCls}">${i+1}</div>
+      ${av}
+      <div><div class="lb-name">${m.name}${isMe?' <span style="color:var(--accent);font-size:10px">YOU</span>':''}</div><div class="lb-sub">${m.city||''}</div></div>
+      <div class="lb-metric">${k}<div class="lb-metric-label">km</div></div>
+      <div class="lb-metric">${runs}<div class="lb-metric-label">runs</div></div>
+      <div class="lb-metric">${pb5k}<div class="lb-metric-label">5K PB</div></div>
+      <div><div class="lb-bar-track"><div class="lb-bar-fill" style="width:${pct}%"></div></div></div>
+    </div>`;
+  }).join('');
+}
+
+function setLbPeriod(p,btn){
+  lbPeriod=p;
+  document.querySelectorAll('.lb-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderLeaderboard();
+}
+
+function renderProfiles(){
+  const members=loadMembers();
+  if(!members.length) return;
+  const meId=sessionStorage.getItem('prc_me');
+  document.getElementById('profiles-grid').innerHTML=members.map(m=>{
+    const isMe=String(m.id)===String(meId);
+    const av=(m.avatar&&!m.avatar.includes('avatar/large/default'))
+      ?`<img class="pc-avatar" src="${m.avatar}">`
+      :`<div class="pc-avatar-ph">${initials(m.name)}</div>`;
+    const pbs=PB_DISTS.map(d=>{const pb=m.pbs?.[d.label];return`<div class="pb-row"><span class="pb-dist">${d.label}</span><span class="pb-time ${pb?'':'no-pb'}">${pb?toTime(pb.time):'Not recorded'}</span></div>`;}).join('');
+    return`<div class="profile-card ${isMe?'me-card':''}">
+      <div class="pc-top">${av}<div><div class="pc-name">${m.name}</div><div class="pc-loc">${m.city||'—'}</div></div>${isMe?'<div class="pc-me-badge">YOU</div>':''}</div>
+      <div class="pc-stats">
+        <div class="pc-stat"><div class="pc-stat-val">${m.mileage?.week||0}</div><div class="pc-stat-label">km/week</div></div>
+        <div class="pc-stat"><div class="pc-stat-val">${m.mileage?.month||0}</div><div class="pc-stat-label">km/month</div></div>
+        <div class="pc-stat"><div class="pc-stat-val">${m.mileage?.year||0}</div><div class="pc-stat-label">km/year</div></div>
+      </div>
+      <div class="pc-pbs"><div class="pc-pbs-title">PERSONAL BESTS</div>${pbs}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderMyProfile(){
+  const me=getMe(); if(!me) return;
+  document.getElementById('pb-tbody').innerHTML=PB_DISTS.map(d=>{
+    const pb=me.pbs?.[d.label];
+    return`<tr><td>${d.label}</td><td class="${pb?'pb-gold':'pb-na'}">${pb?toTime(pb.time):'—'}</td><td class="${pb?'':'pb-na'}">${pb?pb.pace:'—'}</td><td class="${pb?'':'pb-na'}" style="font-size:11px">${pb?fmtDate(pb.date):'—'}</td></tr>`;
+  }).join('');
+  const ml=me.mileage||{};
+  document.getElementById('mileage-bars').innerHTML=`
+    <div><div class="ml-header"><span class="ml-label">This Week</span><span class="ml-val">${ml.week||0} km · ${ml.weekRuns||0} runs</span></div><div class="ml-track"><div class="ml-fill" style="width:${Math.min((ml.week||0)/100*100,100)}%;background:var(--accent)"></div></div></div>
+    <div><div class="ml-header"><span class="ml-label">This Month</span><span class="ml-val">${ml.month||0} km · ${ml.monthRuns||0} runs</span></div><div class="ml-track"><div class="ml-fill" style="width:${Math.min((ml.month||0)/300*100,100)}%;background:var(--blue)"></div></div></div>
+    <div><div class="ml-header"><span class="ml-label">This Year</span><span class="ml-val">${ml.year||0} km</span></div><div class="ml-track"><div class="ml-fill" style="width:${Math.min((ml.year||0)/2000*100,100)}%;background:var(--gold)"></div></div></div>`;
+  document.getElementById('my-activities').innerHTML=(me.recent||[]).map(a=>`
+    <div class="lb-row" style="grid-template-columns:auto 1fr auto auto">
+      <div style="font-size:18px">${actEmoji(a.type)}</div>
+      <div><div class="lb-name">${a.name}</div><div class="lb-sub">${fmtDate(a.date)} · ${a.pace}</div></div>
+      <div class="lb-metric">${a.distance}<div class="lb-metric-label">km</div></div>
+      <div class="lb-metric">${a.time}<div class="lb-metric-label">time</div></div>
+    </div>`).join('')||'<div class="empty"><div class="empty-sub">No activities found</div></div>';
+}
+
+function logout(){
+  sessionStorage.removeItem('prc_me');
+  hideEl('logout-btn'); showEl('join-btn'); hideEl('my-tab');
+  switchTab('leaderboard',document.querySelector('.tab'));
+}
+
+// ── INIT ──
+(async function(){
+  updateStrip();
+  const params=new URLSearchParams(location.search);
+  const code=params.get('code');
+  const meId=sessionStorage.getItem('prc_me');
+
+  if(code){
+    setLoading('Loading your data…');
+    history.replaceState({},'',location.pathname);
+    try{
+      const {access_token,athlete}=await handleCallback(code);
+      await fetchMemberData(access_token,athlete);
+      sessionStorage.setItem('prc_me',athlete.id);
+      showDashboard();
+      showEl('logout-btn'); hideEl('join-btn'); showEl('my-tab');
+    }catch(e){ alert('Error: '+e.message); location.href=location.pathname; }
+  } else if(meId&&loadMembers().find(m=>m.id==meId)){
+    showDashboard();
+    showEl('logout-btn'); hideEl('join-btn'); showEl('my-tab');
+  } else {
+    document.getElementById('landing').style.display='flex';
+  }
+})();
+</script>
+</body>
+</html>
